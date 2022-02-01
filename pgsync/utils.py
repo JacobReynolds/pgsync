@@ -21,6 +21,8 @@ from .settings import (
     REDIS_PORT,
     REDIS_SCHEME,
     SCHEMA,
+    PG_DB_TRANSACTIONAL_CONSISTENCY,
+    PG_TABLE_TRANSACTIONAL_CONSISTENCY
 )
 
 logger = logging.getLogger(__name__)
@@ -97,6 +99,29 @@ def threaded(fn):
 
     return wrapper
 
+# If we don't need database-wide transactional consistency, we can sort the events by table.
+# This will still enforce table-level transactional consistency. Without this flag enabled, 
+#  if performing many bulk actions interleaved across multiple tables, 
+#  we have to query the DB and Elasticsearch one at a time, instead of in bulk.
+def sort_payloads(payloads: list) -> list:
+    """Sorts payloads by table and optionally pg_op"""
+    if not PG_TABLE_TRANSACTIONAL_CONSISTENCY:
+        payloads.sort(key=lambda x: (x['table'], get_tg_op_priority(x['tg_op'])))
+    elif not PG_DB_TRANSACTIONAL_CONSISTENCY:
+        payloads.sort(key=lambda x: (x['table']))
+
+def get_tg_op_priority(op: str) -> int:
+    """
+    Return the priority of an operation.
+    """
+    if op == "INSERT":
+        return 0
+    elif op == "UPDATE":
+        return 1
+    elif op == "DELETE":
+        return 2
+    else:
+        return 3
 
 def get_config(config: Optional[str] = None) -> str:
     """

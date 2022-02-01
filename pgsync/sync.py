@@ -52,13 +52,13 @@ from .settings import (
     CHECKPOINT_PATH,
     LOG_INTERVAL,
     POLL_TIMEOUT,
-    PG_TRANSACTIONAL_CONSISTENCY,
+    PG_DB_TRANSACTIONAL_CONSISTENCY,
     REDIS_POLL_INTERVAL,
     REDIS_WRITE_CHUNK_SIZE,
     REPLICATION_SLOT_CLEANUP_INTERVAL,
 )
 from .transform import get_private_keys, transform
-from .utils import get_config, show_settings, threaded, Timer
+from .utils import get_config, show_settings, threaded, sort_payloads, Timer
 
 logger = logging.getLogger(__name__)
 
@@ -1045,12 +1045,7 @@ class Sync(Base):
                 self.es.bulk(self.index, self._payloads(_payload))
 
         else:
-            # If we don't need database-wide transactional consistency, we can sort the events by table.
-            # This will still enforce table-level transactional consistency. Without this flag enabled, 
-            #  if performing many bulk actions interleaved across multiple tables, 
-            #  we have to query the DB and Elasticsearch one at a time, instead of in bulk.
-            if not PG_TRANSACTIONAL_CONSISTENCY:
-                payloads.sort(key=lambda x: x['table'])
+            sort_payloads(payloads)
             _payloads: list = []
             for i, payload in enumerate(payloads):
                 _payloads.append(payload)
