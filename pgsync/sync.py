@@ -1050,6 +1050,7 @@ class Sync(Base):
             #  if performing many bulk actions interleaved across multiple tables, 
             #  we have to query the DB and Elasticsearch one at a time, instead of in bulk.
             if not PG_TRANSACTIONAL_CONSISTENCY:
+                print("Sorting payloads by table")
                 payloads.sort(key=lambda x: x['table'])
             _payloads: list = []
             for i, payload in enumerate(payloads):
@@ -1061,9 +1062,11 @@ class Sync(Base):
                         payload["tg_op"] != payload2["tg_op"]
                         or payload["table"] != payload2["table"]
                     ):
+                        print("Sending " + str(len(_payloads)) + " payloads")
                         self.es.bulk(self.index, self._payloads(_payloads))
                         _payloads = []
                 elif j == len(payloads):
+                    print("Sending " + str(len(_payloads)) + " payloads")
                     self.es.bulk(self.index, self._payloads(_payloads))
                     _payloads: list = []
 
