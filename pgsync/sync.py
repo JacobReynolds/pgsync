@@ -58,7 +58,7 @@ from .settings import (
     REPLICATION_SLOT_CLEANUP_INTERVAL,
 )
 from .transform import get_private_keys, transform
-from .utils import get_config, show_settings, threaded, Timer, sort_payloads
+from .utils import get_config, show_settings, threaded, Timer
 
 logger = logging.getLogger(__name__)
 
@@ -1051,7 +1051,7 @@ class Sync(Base):
             #  we have to query the DB and Elasticsearch one at a time, instead of in bulk.
             if not PG_TRANSACTIONAL_CONSISTENCY:
                 print("Sorting payloads by table")
-                payloads = sort_payloads(payloads)
+                payloads.sort(key=lambda x: (x['table'],x['new']['id']) if x.get("new") != None else (x['table'],x['old']['id']))
             _payloads: list = []
             for i, payload in enumerate(payloads):
                 _payloads.append(payload)
