@@ -97,6 +97,24 @@ def threaded(fn):
 
     return wrapper
 
+def sort_payloads(payloads: list) -> list:
+    """Sorts payloads by table and pg_op"""
+    payloads.sort(key=lambda x: (x['table'],get_tg_op_priority(x['pg_op'])))
+    return payloads
+
+def get_tg_op_priority(op: str) -> int:
+    """
+    Return the priority of an operation.
+    """
+    if op == "INSERT":
+        return 0
+    elif op == "UPDATE":
+        return 1
+    elif op == "DELETE":
+        return 2
+    else:
+        return 3
+
 
 def get_config(config: Optional[str] = None) -> str:
     """
