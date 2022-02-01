@@ -1062,6 +1062,8 @@ class Sync(Base):
                         payload["tg_op"] != payload2["tg_op"]
                         or payload["table"] != payload2["table"]
                     ):
+                        if (len(_payloads)==1):
+                            print(_payloads)
                         print("Sending " + str(len(_payloads)) + " payloads")
                         self.es.bulk(self.index, self._payloads(_payloads))
                         _payloads = []
