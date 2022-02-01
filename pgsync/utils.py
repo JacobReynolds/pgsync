@@ -99,7 +99,7 @@ def threaded(fn):
 
 def sort_payloads(payloads: list) -> list:
     """Sorts payloads by table and pg_op"""
-    payloads.sort(key=lambda x: (x['table'],get_tg_op_priority(x['pg_op'])))
+    payloads.sort(key=lambda x: (x['table'], get_tg_op_priority(x['tg_op'])))
     return payloads
 
 def get_tg_op_priority(op: str) -> int:
